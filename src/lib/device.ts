@@ -9,17 +9,8 @@ export function getDeviceId(): string {
   return id;
 }
 
+/** Configuración de IA desde variables de entorno (no editable desde la UI). */
 export const aiSettings = {
-  get key() {
-    return localStorage.getItem('nd.gemini_key') ?? '';
-  },
-  set key(v: string) {
-    localStorage.setItem('nd.gemini_key', v.trim());
-  },
-  get model() {
-    return localStorage.getItem('nd.gemini_model') || 'gemini-2.5-flash';
-  },
-  set model(v: string) {
-    localStorage.setItem('nd.gemini_model', v.trim());
-  },
+  key: (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) ?? '',
+  model: (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-3.8-flash',
 };

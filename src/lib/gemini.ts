@@ -57,12 +57,21 @@ const PLATE_SCHEMA = {
   required: ['name', 'items', 'notes'],
 };
 
+/** Reintenta ante saturación del modelo (429/500/503) con espera creciente. */
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 4): Promise<Response> {
+  for (let i = 1; ; i++) {
+    const res = await fetch(url, init);
+    if (![429, 500, 503].includes(res.status) || i >= attempts) return res;
+    await new Promise((r) => setTimeout(r, 1500 * i));
+  }
+}
+
 async function generate<T>(prompt: string, images: ImageData[], schema: object): Promise<T> {
   const key = aiSettings.key;
-  if (!key) throw new Error('Configura tu API key de Gemini en Ajustes.');
+  if (!key) throw new Error('La IA no está configurada (falta VITE_GEMINI_API_KEY).');
   const model = encodeURIComponent(aiSettings.model);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
@@ -79,7 +88,11 @@ async function generate<T>(prompt: string, images: ImageData[], schema: object):
   });
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new Error(json?.error?.message ?? `Error de Gemini (${res.status})`);
-  const text: string | undefined = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const parts: { text?: string; thought?: boolean }[] = json?.candidates?.[0]?.content?.parts ?? [];
+  const text = parts
+    .filter((p) => p.text && !p.thought)
+    .map((p) => p.text)
+    .join('');
   if (!text) throw new Error('La IA no devolvió resultado. Intenta con otra foto.');
   return JSON.parse(text) as T;
 }

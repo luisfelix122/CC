@@ -62,7 +62,6 @@ export default function App() {
             {tab === 'add' && (
               <AddFood
                 hasKey={!!aiSettings.key}
-                goSettings={() => setTab('settings')}
                 onError={onError}
                 onSaved={async () => {
                   await data.refresh();

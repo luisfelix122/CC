@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { saveGoals } from '../lib/api';
-import { aiSettings } from '../lib/device';
 import type { Goals } from '../lib/types';
 import type { AppData } from '../hooks/useData';
 
@@ -10,11 +9,9 @@ interface Props {
   onSaved: () => void;
 }
 
-/** CU-05 metas + CU-08 recordatorios + configuración de IA. */
+/** CU-05 metas + CU-08 recordatorios. */
 export function Settings({ data, onError, onSaved }: Props) {
   const [g, setG] = useState<Goals>(data.goals);
-  const [key, setKey] = useState(aiSettings.key);
-  const [model, setModel] = useState(aiSettings.model);
   const [busy, setBusy] = useState(false);
 
   const valid = g.kcal_goal > 0 && g.water_goal_ml > 0 && g.reminder_minutes > 0;
@@ -24,8 +21,6 @@ export function Settings({ data, onError, onSaved }: Props) {
   const save = async () => {
     setBusy(true);
     try {
-      aiSettings.key = key;
-      aiSettings.model = model;
       if (g.reminders_on && 'Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
       }
@@ -73,26 +68,6 @@ export function Settings({ data, onError, onSaved }: Props) {
           />
         </label>
         <p className="muted">Funcionan mientras la app esté abierta.</p>
-      </div>
-
-      <div className="panel paper form">
-        <h2>IA (Gemini)</h2>
-        <label>
-          API key
-          <input
-            type="password"
-            value={key}
-            placeholder="AIza…"
-            onChange={(e) => setKey(e.target.value)}
-          />
-        </label>
-        <label>
-          Modelo
-          <input value={model} onChange={(e) => setModel(e.target.value)} />
-        </label>
-        <p className="muted">
-          Se guarda solo en este navegador. Consíguela en aistudio.google.com/apikey.
-        </p>
       </div>
 
       <button className="tactile primary" disabled={!valid || busy} onClick={save}>

@@ -13,7 +13,6 @@ import type { FoodItem, FoodKind } from '../lib/types';
 interface Props {
   onSaved: () => void;
   onError: (m: string) => void;
-  goSettings: () => void;
   hasKey: boolean;
 }
 
@@ -22,7 +21,7 @@ interface Photo extends ImageData {
 }
 
 /** CU-01 (producto por etiqueta), CU-02 (plato por foto) y CU-03 (ajuste antes de guardar). */
-export function AddFood({ onSaved, onError, goSettings, hasKey }: Props) {
+export function AddFood({ onSaved, onError, hasKey }: Props) {
   const [kind, setKind] = useState<FoodKind>('plate');
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [description, setDescription] = useState('');
@@ -126,10 +125,7 @@ export function AddFood({ onSaved, onError, goSettings, hasKey }: Props) {
     return (
       <div className="panel paper">
         <h2>Falta configurar la IA</h2>
-        <p>Para estimar calorías con fotos necesitas una API key de Gemini.</p>
-        <button className="tactile primary" onClick={goSettings}>
-          Ir a Ajustes
-        </button>
+        <p className="muted">Falta la variable de entorno VITE_GEMINI_API_KEY en el despliegue.</p>
       </div>
     );
   }
