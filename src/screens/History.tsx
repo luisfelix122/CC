@@ -45,16 +45,16 @@ export function History({ data }: { data: AppData }) {
       </div>
 
       <div className="panel paper">
-        <h2>Calorías · últimos 7 días</h2>
-        <WeekChart days={week} field="kcal" goal={goals.kcal_goal} color="#c8752b" unit="kcal" />
+        <h2>Calorías, últimos 7 días</h2>
+        <WeekChart days={week} field="kcal" goal={goals.kcal_goal} color="#000000" unit="kcal" />
       </div>
       <div className="panel paper">
-        <h2>Agua · últimos 7 días</h2>
+        <h2>Agua, últimos 7 días</h2>
         <WeekChart
           days={week}
           field="water_ml"
           goal={goals.water_goal_ml}
-          color="#2a7fc0"
+          color="#5db9e3"
           unit="ml"
         />
       </div>

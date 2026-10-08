@@ -36,7 +36,7 @@ export function WeekChart({ days, field, goal, color, unit }: Props) {
               y={y(v)}
               width={bw * 0.64}
               height={h - y(v)}
-              rx="4"
+              rx="10"
               fill={color}
               opacity={ok ? 1 : 0.6}
             >
@@ -48,7 +48,7 @@ export function WeekChart({ days, field, goal, color, unit }: Props) {
           </g>
         );
       })}
-      <line x1="0" x2={w} y1={y(goal)} y2={y(goal)} stroke="#8c1d12" strokeDasharray="5 4" />
+      <line x1="0" x2={w} y1={y(goal)} y2={y(goal)} stroke="#e5484d" strokeDasharray="5 4" />
       <text x={w - 4} y={y(goal) - 4} textAnchor="end" className="axis">
         meta {goal}
       </text>

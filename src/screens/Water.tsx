@@ -42,6 +42,7 @@ export function Water({ data, todayMl, onError }: Props) {
           ml={todayMl}
           goal={data.goals.water_goal_ml}
           onTap={() => run(() => addWater(250))}
+          size="lg"
         />
         <p className="big-number">
           {todayMl} <small>/ {data.goals.water_goal_ml} ml</small>
