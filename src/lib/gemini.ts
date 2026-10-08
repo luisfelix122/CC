@@ -57,24 +57,41 @@ const PLATE_SCHEMA = {
   required: ['name', 'items', 'notes'],
 };
 
-/** Reintenta ante saturación del modelo (429/500/503) con espera creciente. */
-async function fetchWithRetry(url: string, init: RequestInit, attempts = 4): Promise<Response> {
-  for (let i = 1; ; i++) {
-    const res = await fetch(url, init);
-    if (![429, 500, 503].includes(res.status) || i >= attempts) return res;
-    await new Promise((r) => setTimeout(r, 1500 * i));
+const FALLBACK_MODELS = ['gemini-3.7-flash', 'gemini-3.8-flash'];
+const TIMEOUT_MS = 30_000;
+
+/**
+ * Prueba el modelo configurado y, si está saturado (429/5xx) o no responde a tiempo,
+ * pasa al siguiente modelo de respaldo.
+ */
+async function fetchWithFallback(key: string, body: string): Promise<Response> {
+  const models = [...new Set([aiSettings.model, ...FALLBACK_MODELS])];
+  let last: Response | Error = new Error('Sin respuesta de la IA.');
+  for (const model of models) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body,
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (![404, 429, 500, 503].includes(res.status)) return res;
+      last = res;
+    } catch (e) {
+      last = e as Error;
+    }
   }
+  if (last instanceof Error) throw new Error('La IA tardó demasiado. Intenta de nuevo.');
+  return last;
 }
 
 async function generate<T>(prompt: string, images: ImageData[], schema: object): Promise<T> {
   const key = aiSettings.key;
   if (!key) throw new Error('La IA no está configurada (falta VITE_GEMINI_API_KEY).');
-  const model = encodeURIComponent(aiSettings.model);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  const res = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({
+  const res = await fetchWithFallback(
+    key,
+    JSON.stringify({
       contents: [
         {
           parts: [
@@ -85,7 +102,7 @@ async function generate<T>(prompt: string, images: ImageData[], schema: object):
       ],
       generationConfig: { responseMimeType: 'application/json', responseSchema: schema },
     }),
-  });
+  );
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new Error(json?.error?.message ?? `Error de Gemini (${res.status})`);
   const parts: { text?: string; thought?: boolean }[] = json?.candidates?.[0]?.content?.parts ?? [];
